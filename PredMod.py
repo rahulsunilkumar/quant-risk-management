@@ -52,12 +52,20 @@ if len(tickers) > 0:
     # Split the data into train and test sets
     X = returns.drop(columns=tickers)  # Features (rolling averages, volatility)
     y = returns[tickers]  # Target (returns)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size/100, shuffle=False)
-    
-    # If predicting for a single asset, flatten y_train
+
+    # If predicting for a single asset, flatten y to 1D array
     if len(tickers) == 1:
-        y_train = y_train.values.ravel()  # Flatten for single output
-    
+        y = y.values.ravel()
+
+    # Train-test split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size/100, shuffle=False)
+
+    # Select model based on user input
+    if model_choice == 'Gradient Boosting':
+        model = GradientBoostingRegressor(n_estimators=100, random_state=42)
+    elif model_choice == 'Random Forest':
+        model = RandomForestRegressor(n_estimators=100, random_state=42)
+
     # Train the model
     model.fit(X_train, y_train)
 
@@ -66,22 +74,41 @@ if len(tickers) > 0:
 
     # Display evaluation metrics
     st.markdown("### Model Performance")
-    for i, ticker in enumerate(tickers):
-        rmse = np.sqrt(mean_squared_error(y_test[ticker], y_pred[:, i]))
-        r2 = r2_score(y_test[ticker], y_pred[:, i])
-        st.write(f"**{ticker}**: RMSE = {rmse:.4f}, R² = {r2:.4f}")
+    if len(tickers) == 1:
+        # Single asset evaluation
+        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+        r2 = r2_score(y_test, y_pred)
+        st.write(f"**{tickers[0]}**: RMSE = {rmse:.4f}, R² = {r2:.4f}")
+    else:
+        # Multiple asset evaluation
+        for i, ticker in enumerate(tickers):
+            rmse = np.sqrt(mean_squared_error(y_test[ticker], y_pred[:, i]))
+            r2 = r2_score(y_test[ticker], y_pred[:, i])
+            st.write(f"**{ticker}**: RMSE = {rmse:.4f}, R² = {r2:.4f}")
 
     # Plot actual vs. predicted returns for each asset
     st.markdown("### Actual vs. Predicted Returns")
-    for i, ticker in enumerate(tickers):
+    if len(tickers) == 1:
+        # Single asset plot
         fig, ax = plt.subplots()
-        ax.plot(y_test.index, y_test[ticker], label="Actual Returns", color="blue")
-        ax.plot(y_test.index, y_pred[:, i], label="Predicted Returns", color="red", linestyle="--")
-        ax.set_title(f"Actual vs. Predicted Returns for {ticker}")
+        ax.plot(y_test.index, y_test, label="Actual Returns", color="blue")
+        ax.plot(y_test.index, y_pred, label="Predicted Returns", color="red", linestyle="--")
+        ax.set_title(f"Actual vs. Predicted Returns for {tickers[0]}")
         ax.set_xlabel("Date")
         ax.set_ylabel("Returns")
         ax.legend()
         st.pyplot(fig)
+    else:
+        # Multiple asset plots
+        for i, ticker in enumerate(tickers):
+            fig, ax = plt.subplots()
+            ax.plot(y_test.index, y_test[ticker], label="Actual Returns", color="blue")
+            ax.plot(y_test.index, y_pred[:, i], label="Predicted Returns", color="red", linestyle="--")
+            ax.set_title(f"Actual vs. Predicted Returns for {ticker}")
+            ax.set_xlabel("Date")
+            ax.set_ylabel("Returns")
+            ax.legend()
+            st.pyplot(fig)
 
     # Show feature importance (only for models that support it)
     if model_choice == 'Random Forest':
