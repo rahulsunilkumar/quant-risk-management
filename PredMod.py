@@ -53,13 +53,11 @@ if len(tickers) > 0:
     X = returns.drop(columns=tickers)  # Features (rolling averages, volatility)
     y = returns[tickers]  # Target (returns)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size/100, shuffle=False)
-
-    # Select model based on user input
-    if model_choice == 'Gradient Boosting':
-        model = GradientBoostingRegressor(n_estimators=100, random_state=42)
-    elif model_choice == 'Random Forest':
-        model = RandomForestRegressor(n_estimators=100, random_state=42)
-
+    
+    # If predicting for a single asset, flatten y_train
+    if len(tickers) == 1:
+        y_train = y_train.values.ravel()  # Flatten for single output
+    
     # Train the model
     model.fit(X_train, y_train)
 
