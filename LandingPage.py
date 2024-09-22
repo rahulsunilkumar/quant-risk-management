@@ -38,32 +38,54 @@ Based on the stress test outcomes, we design hedging strategies to mitigate risk
 Access the full codebase, documentation, and updates for all the projects in this series.
 """)
 
-# Add buttons to navigate to the projects (placeholder links for now)
-st.markdown("""
-#### Jump to Individual Projects:
-""")
+# Adding buttons to navigate to the projects
+st.markdown("#### Jump to Individual Projects:")
 
-col1, col2, col3, col4, col5 = st.columns(5)
+# Creating large buttons for each project
+col1, col2, col3 = st.columns([1, 1, 1])
+col4, col5 = st.columns([1, 1])
 
+# Project 1 Button
 with col1:
-    st.button("Jump to Predictive Modeling & Asset Returns With ML", key="project1")
-with col2:
-    st.button("Jump to Portfolio Optimization With ML", key="project2")
-with col3:
-    st.button("Jump to Stress Testing", key="project3")
-with col4:
-    st.button("Jump to Hedging Strategies", key="project4")
-with col5:
-    st.button("GitHub", key="github")
+    st.markdown(f"""
+    <a href="https://qrm-rsunilkumar-predictive-modeling.streamlit.app/" target="_blank">
+    <button style="background-color:#4CAF50;color:white;padding:15px 32px;text-align:center;
+    text-decoration:none;display:inline-block;font-size:16px;">Jump to Predictive Modeling & Asset Returns With ML</button>
+    </a>
+    """, unsafe_allow_html=True)
 
-# Placeholder URLs for now, they can be connected to the respective pages later
-if st.session_state.get("project1"):
-    st.write("[Go to Predictive Modeling & Asset Returns With ML](#)")
-if st.session_state.get("project2"):
-    st.write("[Go to Portfolio Optimization With ML](#)")
-if st.session_state.get("project3"):
-    st.write("[Go to Stress Testing](#)")
-if st.session_state.get("project4"):
-    st.write("[Go to Hedging Strategies](#)")
-if st.session_state.get("github"):
-    st.write("[Go to GitHub](#)")
+# Project 2 Button
+with col2:
+    st.markdown(f"""
+    <a href="https://qrm-rsunilkumar-portfolio-optimization.streamlit.app/" target="_blank">
+    <button style="background-color:#4CAF50;color:white;padding:15px 32px;text-align:center;
+    text-decoration:none;display:inline-block;font-size:16px;">Jump to Portfolio Optimization With ML</button>
+    </a>
+    """, unsafe_allow_html=True)
+
+# Project 3 Button
+with col3:
+    st.markdown(f"""
+    <a href="https://qrm-rsunilkumar-stress-test.streamlit.app/" target="_blank">
+    <button style="background-color:#4CAF50;color:white;padding:15px 32px;text-align:center;
+    text-decoration:none;display:inline-block;font-size:16px;">Jump to Stress Testing</button>
+    </a>
+    """, unsafe_allow_html=True)
+
+# Project 4 Button
+with col4:
+    st.markdown(f"""
+    <a href="https://qrm-rsunilkumar-hedge-strat.streamlit.app/" target="_blank">
+    <button style="background-color:#4CAF50;color:white;padding:15px 32px;text-align:center;
+    text-decoration:none;display:inline-block;font-size:16px;">Jump to Hedging Strategies</button>
+    </a>
+    """, unsafe_allow_html=True)
+
+# GitHub Button
+with col5:
+    st.markdown(f"""
+    <a href="https://github.com/rahulsunilkumar/quant-risk-management/tree/main" target="_blank">
+    <button style="background-color:#4CAF50;color:white;padding:15px 32px;text-align:center;
+    text-decoration:none;display:inline-block;font-size:16px;">GitHub</button>
+    </a>
+    """, unsafe_allow_html=True)
