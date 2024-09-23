@@ -118,4 +118,3 @@ if 'data' in locals():
 else:
     st.write("Please select a sample dataset or upload your own.")
 
-`
