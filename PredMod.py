@@ -48,12 +48,15 @@ if len(tickers) > 0:
 
     # Drop rows with NaN values after creating rolling features
     returns = returns.dropna()
-
-    # Sentiment Analysis (VADER)
-    st.markdown("### Sentiment Analysis from Financial News")
     
+    import nltk
+    from nltk.sentiment.vader import SentimentIntensityAnalyzer
+    
+    # Check and download the VADER lexicon
+    nltk.download('vader_lexicon')
+    
+    # Sentiment Analysis (VADER)
     def fetch_news_sentiment():
-        # Placeholder for real news scraping API
         sid = SentimentIntensityAnalyzer()
         sample_news = [
             "The stock market is booming today.",
