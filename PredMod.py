@@ -33,14 +33,19 @@ ticker, start_date, end_date, n_epochs = user_input_features()
 
 # Fetch data from Yahoo Finance
 @st.cache_data
-def load_data(ticker):
+def load_data(ticker, start_date, end_date):
     data = yf.download(ticker, start=start_date, end=end_date)
     data.reset_index(inplace=True)
     return data
 
 data_load_state = st.text('Loading data...')
-data = load_data(ticker)
+data = load_data(ticker, start_date, end_date)
 data_load_state.text('Loading data... Done!')
+
+# Check if data is available
+if data.empty:
+    st.error('No data available for the selected stock and date range. Please adjust your input.')
+    st.stop()
 
 # Display raw data
 st.subheader('Raw Data')
@@ -58,20 +63,18 @@ def plot_raw_data():
 plot_raw_data()
 
 # Prepare data for LSTM model
-# Use closing price for prediction
 df = data[['Date', 'Close']]
-df.index = df['Date']
-df.drop('Date', axis=1, inplace=True)
+df.set_index('Date', inplace=True)
 
 # Scale data
 scaler = MinMaxScaler(feature_range=(0,1))
-scaled_data = scaler.fit_transform(df)
+scaled_data = scaler.fit_transform(df.values)
 
 # Create training and testing datasets
-training_data_len = int(np.ceil(len(scaled_data) * 0.8))
+training_data_len = int(len(scaled_data) * 0.8)
 
-train_data = scaled_data[0:int(training_data_len), :]
-test_data = scaled_data[training_data_len - 60:, :]
+train_data = scaled_data[0:training_data_len]
+test_data = scaled_data[training_data_len - 60:]
 
 # Create datasets
 def create_dataset(dataset, look_back=60):
@@ -126,22 +129,24 @@ predictions = model.predict(X_test)
 predictions = scaler.inverse_transform(predictions)
 
 # Get the actual prices
-actual_prices = df[training_data_len:].values
+actual_prices = df.values[training_data_len:]
 
 # Calculate RMSE
 from sklearn.metrics import mean_squared_error
-rmse = np.sqrt(mean_squared_error(actual_prices, predictions))
+rmse = np.sqrt(mean_squared_error(actual_prices[-len(predictions):], predictions))
+
+# Prepare data for plotting
+train = df[:training_data_len]
+valid = df[training_data_len:]
+valid = valid.copy()
+valid['Predictions'] = predictions
 
 # Plot the predictions
 def plot_predictions():
-    train = df[:training_data_len]
-    valid = df[training_data_len:]
-    valid['Predictions'] = predictions
-
     fig, ax = plt.subplots(figsize=(12,6))
-    ax.plot(train['Close'], label='Training Data')
-    ax.plot(valid['Close'], label='Actual Price')
-    ax.plot(valid['Predictions'], label='Predicted Price')
+    ax.plot(train.index, train['Close'], label='Training Data')
+    ax.plot(valid.index, valid['Close'], label='Actual Price')
+    ax.plot(valid.index, valid['Predictions'], label='Predicted Price')
     ax.set_xlabel('Date')
     ax.set_ylabel('Price')
     ax.legend()
@@ -152,12 +157,10 @@ plot_predictions()
 
 # Show the predicted vs actual values
 st.subheader('Comparison Table')
-valid = df[training_data_len:].copy()
-valid['Predictions'] = predictions
 st.write(valid[['Close', 'Predictions']])
 
 # Display RMSE
-st.write(f'**Root Mean Squared Error:** {rmse}')
+st.write(f'**Root Mean Squared Error:** {rmse:.2f}')
 
 # Footer
 st.markdown("""
