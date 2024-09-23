@@ -1,169 +1,110 @@
-# app.py
-
 import streamlit as st
-import pandas as pd
 import numpy as np
+import pandas as pd
 import yfinance as yf
-from datetime import date
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
 
-# Set page configuration
-st.set_page_config(page_title='Stock Price Prediction', layout='wide')
+# Title of the app
+st.title("Stress Testing and Scenario Analysis")
 
-# Title and description
-st.title('📈 Stock Price Prediction using LSTM')
+# Introduction and explanation
 st.markdown("""
-This app uses an LSTM neural network to predict stock prices based on historical data.
+### Overview:
+This project evaluates the resilience of the portfolio by simulating various market stress scenarios. These stress tests help assess how the portfolio would perform during extreme market events, such as a financial crisis or a sudden rise in interest rates.
 """)
 
-# Sidebar for user inputs
-st.sidebar.header('User Input Parameters')
+# Sidebar: User Input for Stress Test
+st.sidebar.header('Stress Test Scenarios')
+tickers = st.sidebar.multiselect('Select assets for stress testing', ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA', 'NFLX'], default=['AAPL', 'GOOGL', 'MSFT'])
+start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime("2018-01-01"))
+end_date = st.sidebar.date_input("End Date", value=pd.to_datetime("2023-01-01"))
+stress_scenarios = st.sidebar.selectbox("Select Stress Scenario", ('2008 Financial Crisis', 'COVID-19 Crash', 'Custom Scenario'))
 
-def user_input_features():
-    ticker = st.sidebar.text_input('Stock Ticker', 'AAPL')
-    start_date = st.sidebar.date_input('Start Date', pd.to_datetime('2012-01-01'))
-    end_date = st.sidebar.date_input('End Date', date.today())
-    n_epochs = st.sidebar.slider('Number of Epochs', 1, 50, 5)
-    return ticker, start_date, end_date, n_epochs
+# Placeholder: Optimized portfolio weights from Project 2 (replace with actual values)
+np.random.seed(42)
+num_assets = len(tickers)
+optimal_weights = np.random.dirichlet(np.ones(num_assets), size=1).flatten()  # Simulated weights
+capital = st.sidebar.number_input('Initial Investment ($)', value=10000)
 
-ticker, start_date, end_date, n_epochs = user_input_features()
+# Function to get stock data
+def get_stock_data(tickers, start, end):
+    data = yf.download(tickers, start=start, end=end)['Adj Close']
+    returns = data.pct_change().dropna()
+    return data, returns
 
-# Fetch data from Yahoo Finance
-@st.cache_data
-def load_data(ticker, start_date, end_date):
-    data = yf.download(ticker, start=start_date, end=end_date)
-    data.reset_index(inplace=True)
-    return data
+# Load stock data
+if len(tickers) > 0:
+    stock_prices, returns = get_stock_data(tickers, start_date, end_date)
+    st.write(f"Displaying stock price data for selected assets: {tickers}")
+    st.line_chart(stock_prices)
 
-data_load_state = st.text('Loading data...')
-data = load_data(ticker, start_date, end_date)
-data_load_state.text('Loading data... Done!')
+    # Calculate portfolio returns under normal conditions
+    portfolio_returns_normal = np.dot(returns, optimal_weights)
 
-# Check if data is available
-if data.empty:
-    st.error('No data available for the selected stock and date range. Please adjust your input.')
-    st.stop()
+    # Define stress test scenarios
+    st.markdown("### Stress Testing Results")
+    
+    if stress_scenarios == '2008 Financial Crisis':
+        # Assume all assets drop by 40%
+        stressed_returns = returns - 0.40
+    elif stress_scenarios == 'COVID-19 Crash':
+        # Assume all assets drop by 30%
+        stressed_returns = returns - 0.30
+    elif stress_scenarios == 'Custom Scenario':
+        # Custom stress: user-defined percentage drops for each asset
+        drop_percentage = st.sidebar.slider("Custom Drop (%):", min_value=0, max_value=50, value=10) / 100
+        stressed_returns = returns - drop_percentage
 
-# Display raw data
-st.subheader('Raw Data')
-st.write(data.tail())
+    # Calculate portfolio returns under stress conditions
+    portfolio_returns_stressed = np.dot(stressed_returns, optimal_weights)
 
-# Plot raw data
-def plot_raw_data():
-    fig, ax = plt.subplots(figsize=(12,6))
-    ax.plot(data['Date'], data['Close'], label='Close Price')
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Price')
+    # Display portfolio performance under normal vs. stress conditions
+    st.write(f"### Portfolio Value (Initial Investment: ${capital:,.2f})")
+    portfolio_value_normal = np.cumprod(1 + portfolio_returns_normal) * capital
+    portfolio_value_stressed = np.cumprod(1 + portfolio_returns_stressed) * capital
+    
+    st.write(f"Final Portfolio Value (Normal): ${portfolio_value_normal[-1]:,.2f}")
+    st.write(f"Final Portfolio Value (Stress): ${portfolio_value_stressed[-1]:,.2f}")
+
+    # Plot portfolio value over time (normal vs. stress)
+    fig, ax = plt.subplots()
+    ax.plot(stock_prices.index[1:], portfolio_value_normal, label="Normal Conditions", color="blue")
+    ax.plot(stock_prices.index[1:], portfolio_value_stressed, label=f"{stress_scenarios} Scenario", color="red")
+    ax.set_title("Portfolio Value Under Normal vs. Stress Conditions")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Portfolio Value ($)")
     ax.legend()
     st.pyplot(fig)
 
-plot_raw_data()
+    # Risk Metrics under Stress Conditions
+    st.markdown("### Risk Metrics Under Stress Conditions")
 
-# Prepare data for LSTM model
-df = data[['Date', 'Close']]
-df.set_index('Date', inplace=True)
+    def calculate_var(returns, alpha=0.05):
+        var = np.percentile(returns, 100 * alpha)
+        return var
 
-# Scale data
-scaler = MinMaxScaler(feature_range=(0,1))
-scaled_data = scaler.fit_transform(df.values)
+    def calculate_cvar(returns, alpha=0.05):
+        var = calculate_var(returns, alpha)
+        cvar = np.mean(returns[returns <= var])
+        return cvar
 
-# Create training and testing datasets
-training_data_len = int(len(scaled_data) * 0.8)
+    # Calculate VaR and CVaR under stress conditions
+    VaR_95_stress = calculate_var(portfolio_returns_stressed, alpha=0.05)
+    CVaR_95_stress = calculate_cvar(portfolio_returns_stressed, alpha=0.05)
 
-train_data = scaled_data[0:training_data_len]
-test_data = scaled_data[training_data_len - 60:]
+    st.write(f"95% Value-at-Risk (VaR) under {stress_scenarios}: {VaR_95_stress*100:.2f}%")
+    st.write(f"95% Conditional Value-at-Risk (CVaR) under {stress_scenarios}: {CVaR_95_stress*100:.2f}%")
 
-# Create datasets
-def create_dataset(dataset, look_back=60):
-    X, y = [], []
-    for i in range(look_back, len(dataset)):
-        X.append(dataset[i - look_back:i, 0])
-        y.append(dataset[i, 0])
-    return np.array(X), np.array(y)
-
-# Create training data
-X_train, y_train = create_dataset(train_data, 60)
-# Create testing data
-X_test, y_test = create_dataset(test_data, 60)
-
-# Reshape data for LSTM model
-X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
-X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
-
-# Build LSTM model
-model = Sequential()
-model.add(LSTM(50, return_sequences=True, input_shape= (X_train.shape[1], 1)))
-model.add(LSTM(50, return_sequences=False))
-model.add(Dense(25))
-model.add(Dense(1))
-
-# Compile the model
-model.compile(optimizer='adam', loss='mean_squared_error')
-
-# Display model summary
-st.subheader('Model Summary')
-model_summary = []
-model.summary(print_fn=lambda x: model_summary.append(x))
-st.text('\n'.join(model_summary))
-
-# Train the model
-st.subheader('Training the Model')
-with st.spinner('Training in progress...'):
-    history = model.fit(X_train, y_train, batch_size=1, epochs=n_epochs, verbose=0)
-st.success('Training completed!')
-
-# Plot training loss
-st.subheader('Training Loss')
-fig2, ax2 = plt.subplots()
-ax2.plot(history.history['loss'], label='Loss')
-ax2.set_xlabel('Epoch')
-ax2.set_ylabel('Loss')
-ax2.legend()
-st.pyplot(fig2)
-
-# Make predictions
-predictions = model.predict(X_test)
-predictions = scaler.inverse_transform(predictions)
-
-# Get the actual prices
-actual_prices = df.values[training_data_len:]
-
-# Calculate RMSE
-from sklearn.metrics import mean_squared_error
-rmse = np.sqrt(mean_squared_error(actual_prices[-len(predictions):], predictions))
-
-# Prepare data for plotting
-train = df[:training_data_len]
-valid = df[training_data_len:]
-valid = valid.copy()
-valid['Predictions'] = predictions
-
-# Plot the predictions
-def plot_predictions():
-    fig, ax = plt.subplots(figsize=(12,6))
-    ax.plot(train.index, train['Close'], label='Training Data')
-    ax.plot(valid.index, valid['Close'], label='Actual Price')
-    ax.plot(valid.index, valid['Predictions'], label='Predicted Price')
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Price')
+    # Plot distribution of stressed portfolio returns
+    fig, ax = plt.subplots()
+    ax.hist(portfolio_returns_stressed, bins=50, alpha=0.75, color='blue')
+    ax.axvline(VaR_95_stress, color='red', linestyle='--', label=f"VaR (95%) = {VaR_95_stress:.4f}")
+    ax.axvline(CVaR_95_stress, color='green', linestyle='--', label=f"CVaR (95%) = {CVaR_95_stress:.4f}")
+    ax.set_title(f"Distribution of Portfolio Returns Under {stress_scenarios}")
+    ax.set_xlabel("Portfolio Returns")
+    ax.set_ylabel("Frequency")
     ax.legend()
     st.pyplot(fig)
 
-st.subheader('Actual vs. Predicted Prices')
-plot_predictions()
-
-# Show the predicted vs actual values
-st.subheader('Comparison Table')
-st.write(valid[['Close', 'Predictions']])
-
-# Display RMSE
-st.write(f'**Root Mean Squared Error:** {rmse:.2f}')
-
-# Footer
-st.markdown("""
----
-Developed by [Your Name]
-""")
+else:
+    st.write("Please select at least one asset.")
