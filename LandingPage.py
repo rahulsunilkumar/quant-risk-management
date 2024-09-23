@@ -1,118 +1,91 @@
 import streamlit as st
-import pandas as pd
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.datasets import load_iris, load_wine, load_breast_cancer
-import numpy as np
 
-# Title and Introduction
-st.title("K-Means Clustering of Financial Data")
+# Title of the landing page
+st.title("Quantitative Risk Management Platform")
 
+# Introduction to the project theme
 st.markdown("""
-### Overview:
-This project focuses on performing K-Means clustering on financial data. You can either select from sample datasets (Iris, Wine, Breast Cancer) or upload your own financial dataset. The app allows for interactive clustering of assets or features, providing visualizations and insights into the clustering behavior.
+### Welcome to the Quantitative Risk Management Platform!
+
+In this platform, we focus on managing risk and optimizing performance for a multi-asset global portfolio using advanced quantitative finance techniques. Each project showcases a different sector of quantitative finance, yet they are all interrelated and contribute to the central goal of portfolio risk management.
+
+Below is a breakdown of each project and how it connects to the overall theme:
 """)
 
-# Sidebar: Dataset Selection
-st.sidebar.header("Select a Dataset")
-dataset_choice = st.sidebar.selectbox(
-    "Choose a dataset or upload your own",
-    ("Iris", "Wine", "Breast Cancer", "Upload Your Own")
-)
+# Overview of Projects and their connections
+st.markdown("""
+### Project 1: K-Means Clustering of Asset Returns
+This project applies unsupervised learning techniques like K-Means clustering to group assets based on their returns. Clustering helps identify patterns, correlations, and groups of assets with similar risk-return profiles, which can be useful in portfolio management and diversification strategies.
 
-# Load sample datasets
-def load_sample_data(dataset_choice):
-    if dataset_choice == "Iris":
-        data = load_iris(as_frame=True)
-        df = data['data']
-        df['target'] = data['target']
-        return df
-    elif dataset_choice == "Wine":
-        data = load_wine(as_frame=True)
-        df = data['data']
-        df['target'] = data['target']
-        return df
-    elif dataset_choice == "Breast Cancer":
-        data = load_breast_cancer(as_frame=True)
-        df = data['data']
-        df['target'] = data['target']
-        return df
+---
 
-# Step 1: Upload Dataset or Select Sample Dataset
-uploaded_file = None
-if dataset_choice == "Upload Your Own":
-    uploaded_file = st.sidebar.file_uploader("Upload a CSV file", type=["csv"])
+### Project 2: Portfolio Optimization with Machine Learning and Factor Models
+This project builds on the clustered asset groups from Project 1 and applies advanced optimization techniques to create an optimal portfolio. We use mean-variance optimization, factor models, and risk metrics like VaR and CVaR to allocate portfolio weights.
 
-if uploaded_file is not None:
-    # Read the uploaded dataset
-    data = pd.read_csv(uploaded_file)
-    st.write("Uploaded Dataset Preview")
-    st.write(data.head())
-elif dataset_choice != "Upload Your Own":
-    # Load the sample dataset
-    data = load_sample_data(dataset_choice)
-    st.write(f"Sample Dataset ({dataset_choice}) Preview")
-    st.write(data.head())
+---
 
-# Proceed if a dataset has been loaded
-if 'data' in locals():
-    # Step 2: Feature Selection
-    st.sidebar.header("Feature Selection")
-    features = st.sidebar.multiselect('Select features for clustering', data.columns)
+### Project 3: Stress Testing and Scenario Analysis
+We take the optimized portfolio from Project 2 and run stress tests under extreme market conditions, simulating potential risks and tail events. This project helps evaluate how the portfolio holds up under adverse conditions.
 
-    if len(features) > 0:
-        # Display selected features
-        st.write(f"Selected features: {features}")
-        X = data[features]
+---
 
-        # Step 3: Standardize the Data
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
+### Project 4: Hedging Strategies using Derivatives
+Based on the stress test outcomes, we design hedging strategies to mitigate risk. Using options, futures, and swaps, we implement strategies like delta hedging and volatility surface modeling to protect the portfolio from downside risk.
 
-        # Step 4: Select the number of clusters (K)
-        st.sidebar.header("Select Number of Clusters")
-        num_clusters = st.sidebar.slider("Number of clusters (K)", min_value=2, max_value=10, value=3)
+---
 
-        # Step 5: Perform K-Means Clustering
-        kmeans = KMeans(n_clusters=num_clusters, random_state=42)
-        kmeans.fit(X_scaled)
-        labels = kmeans.labels_
+### GitHub Repository
+Access the full codebase, documentation, and updates for all the projects in this series.
+""")
 
-        # Add cluster labels to the dataset
-        data['Cluster'] = labels
+# Adding buttons to navigate to the projects
+st.markdown("#### Jump to Individual Projects:")
 
-        # Step 6: Visualize the Clusters
-        st.header("Cluster Visualization")
-        if len(features) == 2:
-            # 2D Scatter Plot
-            fig, ax = plt.subplots()
-            sns.scatterplot(x=features[0], y=features[1], hue='Cluster', data=data, palette='Set1', ax=ax)
-            ax.set_title(f"K-Means Clustering with {num_clusters} Clusters")
-            st.pyplot(fig)
-        elif len(features) == 3:
-            # 3D Scatter Plot (if 3 features are selected)
-            from mpl_toolkits.mplot3d import Axes3D
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            ax.scatter(data[features[0]], data[features[1]], data[features[2]], c=labels, cmap='Set1', s=50)
-            ax.set_xlabel(features[0])
-            ax.set_ylabel(features[1])
-            ax.set_zlabel(features[2])
-            ax.set_title(f"K-Means Clustering with {num_clusters} Clusters")
-            st.pyplot(fig)
-        else:
-            st.write("Please select 2 or 3 features for visualization.")
+# Creating large buttons for each project
+col1, col2, col3 = st.columns([1, 1, 1])
+col4, col5 = st.columns([1, 1])
 
-        # Step 7: Display Cluster Centers
-        st.header("Cluster Centers")
-        cluster_centers = scaler.inverse_transform(kmeans.cluster_centers_)
-        cluster_centers_df = pd.DataFrame(cluster_centers, columns=features)
-        st.write(cluster_centers_df)
+# Project 1 Button (Updated for K-Means)
+with col1:
+    st.markdown(f"""
+    <a href="https://qrm-rsunilkumar-kmeans.streamlit.app/" target="_blank">
+    <button style="background-color:#4CAF50;color:white;padding:15px 32px;text-align:center;
+    text-decoration:none;display:inline-block;font-size:16px;">Jump to K-Means Clustering of Asset Returns</button>
+    </a>
+    """, unsafe_allow_html=True)
 
-    else:
-        st.write("Please select at least one feature for clustering.")
-else:
-    st.write("Please select a sample dataset or upload your own.")
+# Project 2 Button
+with col2:
+    st.markdown(f"""
+    <a href="https://qrm-rsunilkumar-portfolio-optimization.streamlit.app/" target="_blank">
+    <button style="background-color:#4CAF50;color:white;padding:15px 32px;text-align:center;
+    text-decoration:none;display:inline-block;font-size:16px;">Jump to Portfolio Optimization With ML</button>
+    </a>
+    """, unsafe_allow_html=True)
 
+# Project 3 Button
+with col3:
+    st.markdown(f"""
+    <a href="https://qrm-rsunilkumar-stress-test.streamlit.app/" target="_blank">
+    <button style="background-color:#4CAF50;color:white;padding:15px 32px;text-align:center;
+    text-decoration:none;display:inline-block;font-size:16px;">Jump to Stress Testing</button>
+    </a>
+    """, unsafe_allow_html=True)
+
+# Project 4 Button
+with col4:
+    st.markdown(f"""
+    <a href="https://qrm-rsunilkumar-hedge-strat.streamlit.app/" target="_blank">
+    <button style="background-color:#4CAF50;color:white;padding:15px 32px;text-align:center;
+    text-decoration:none;display:inline-block;font-size:16px;">Jump to Hedging Strategies</button>
+    </a>
+    """, unsafe_allow_html=True)
+
+# GitHub Button
+with col5:
+    st.markdown(f"""
+    <a href="https://github.com/rahulsunilkumar/quant-risk-management/tree/main" target="_blank">
+    <button style="background-color:#4CAF50;color:white;padding:15px 32px;text-align:center;
+    text-decoration:none;display:inline-block;font-size:16px;">GitHub</button>
+    </a>
+    """, unsafe_allow_html=True)
