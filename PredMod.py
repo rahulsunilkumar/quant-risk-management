@@ -1,129 +1,166 @@
+# app.py
+
 import streamlit as st
-import numpy as np
 import pandas as pd
+import numpy as np
 import yfinance as yf
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, r2_score
+from datetime import date
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
 
-# Title of the app
-st.title("Predictive Modeling of Asset Returns with Machine Learning")
+# Set page configuration
+st.set_page_config(page_title='Stock Price Prediction', layout='wide')
 
-# Introduction and explanation
+# Title and description
+st.title('📈 Stock Price Prediction using LSTM')
 st.markdown("""
-### Overview:
-This project uses advanced machine learning techniques to predict the returns of various assets (e.g., stocks, bonds, commodities). The predicted returns can later be used for portfolio optimization and risk management.
-
-Key Steps:
-1. Select your assets and date range.
-2. Use machine learning models (Gradient Boosting, Random Forest) to predict future returns.
-3. Evaluate model performance and visualize actual vs. predicted returns.
+This app uses an LSTM neural network to predict stock prices based on historical data.
 """)
 
-# Sidebar: User Input for Asset Selection and Date Range
+# Sidebar for user inputs
 st.sidebar.header('User Input Parameters')
-tickers = st.sidebar.multiselect('Select assets for prediction', ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA', 'NFLX'], default=['AAPL', 'GOOGL'])
-start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime("2018-01-01"))
-end_date = st.sidebar.date_input("End Date", value=pd.to_datetime("2023-01-01"))
-model_choice = st.sidebar.selectbox("Select Machine Learning Model", ('Gradient Boosting', 'Random Forest'))
-test_size = st.sidebar.slider("Select Test Data Size (as %)", min_value=10, max_value=50, value=20)
 
-# Function to get stock data
-def get_stock_data(tickers, start, end):
-    data = yf.download(tickers, start=start, end=end)['Adj Close']
-    returns = data.pct_change().dropna()
-    return data, returns
+def user_input_features():
+    ticker = st.sidebar.text_input('Stock Ticker', 'AAPL')
+    start_date = st.sidebar.date_input('Start Date', pd.to_datetime('2012-01-01'))
+    end_date = st.sidebar.date_input('End Date', date.today())
+    n_epochs = st.sidebar.slider('Number of Epochs', 1, 50, 5)
+    return ticker, start_date, end_date, n_epochs
 
-# Load and display stock data
-if len(tickers) > 0:
-    stock_prices, returns = get_stock_data(tickers, start_date, end_date)
-    st.write(f"Displaying stock price data for selected assets: {tickers}")
-    st.line_chart(stock_prices)
+ticker, start_date, end_date, n_epochs = user_input_features()
 
-    # Feature Engineering: Create rolling features (e.g., moving averages)
-    for ticker in tickers:
-        returns[f'{ticker}_MA10'] = returns[ticker].rolling(window=10).mean()
-        returns[f'{ticker}_Volatility'] = returns[ticker].rolling(window=10).std()
+# Fetch data from Yahoo Finance
+@st.cache_data
+def load_data(ticker):
+    data = yf.download(ticker, start=start_date, end=end_date)
+    data.reset_index(inplace=True)
+    return data
 
-    # Drop rows with NaN values after creating rolling features
-    returns = returns.dropna()
+data_load_state = st.text('Loading data...')
+data = load_data(ticker)
+data_load_state.text('Loading data... Done!')
 
-    # Split the data into train and test sets
-    X = returns.drop(columns=tickers)  # Features (rolling averages, volatility)
-    y = returns[tickers]  # Target (returns)
+# Display raw data
+st.subheader('Raw Data')
+st.write(data.tail())
 
-    # If predicting for a single asset, flatten y to 1D array
-    if len(tickers) == 1:
-        y = y.values.ravel()
+# Plot raw data
+def plot_raw_data():
+    fig, ax = plt.subplots(figsize=(12,6))
+    ax.plot(data['Date'], data['Close'], label='Close Price')
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Price')
+    ax.legend()
+    st.pyplot(fig)
 
-    # Train-test split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size/100, shuffle=False)
+plot_raw_data()
 
-    # Select model based on user input
-    if model_choice == 'Gradient Boosting':
-        model = GradientBoostingRegressor(n_estimators=100, random_state=42)
-    elif model_choice == 'Random Forest':
-        model = RandomForestRegressor(n_estimators=100, random_state=42)
+# Prepare data for LSTM model
+# Use closing price for prediction
+df = data[['Date', 'Close']]
+df.index = df['Date']
+df.drop('Date', axis=1, inplace=True)
 
-    # Train the model
-    model.fit(X_train, y_train)
+# Scale data
+scaler = MinMaxScaler(feature_range=(0,1))
+scaled_data = scaler.fit_transform(df)
 
-    # Predict on the test set
-    y_pred = model.predict(X_test)
+# Create training and testing datasets
+training_data_len = int(np.ceil(len(scaled_data) * 0.8))
 
-    # Display evaluation metrics
-    st.markdown("### Model Performance")
-    if len(tickers) == 1:
-        # Single asset evaluation
-        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-        r2 = r2_score(y_test, y_pred)
-        st.write(f"**{tickers[0]}**: RMSE = {rmse:.4f}, R² = {r2:.4f}")
-    else:
-        # Multiple asset evaluation
-        for i, ticker in enumerate(tickers):
-            rmse = np.sqrt(mean_squared_error(y_test[ticker], y_pred[:, i]))
-            r2 = r2_score(y_test[ticker], y_pred[:, i])
-            st.write(f"**{ticker}**: RMSE = {rmse:.4f}, R² = {r2:.4f}")
+train_data = scaled_data[0:int(training_data_len), :]
+test_data = scaled_data[training_data_len - 60:, :]
 
-    # Plot actual vs. predicted returns for each asset
-    st.markdown("### Actual vs. Predicted Returns")
-    if len(tickers) == 1:
-        # Single asset plot
-        fig, ax = plt.subplots()
-        ax.plot(y_test.index, y_test, label="Actual Returns", color="blue")
-        ax.plot(y_test.index, y_pred, label="Predicted Returns", color="red", linestyle="--")
-        ax.set_title(f"Actual vs. Predicted Returns for {tickers[0]}")
-        ax.set_xlabel("Date")
-        ax.set_ylabel("Returns")
-        ax.legend()
-        st.pyplot(fig)
-    else:
-        # Multiple asset plots
-        for i, ticker in enumerate(tickers):
-            fig, ax = plt.subplots()
-            ax.plot(y_test.index, y_test[ticker], label="Actual Returns", color="blue")
-            ax.plot(y_test.index, y_pred[:, i], label="Predicted Returns", color="red", linestyle="--")
-            ax.set_title(f"Actual vs. Predicted Returns for {ticker}")
-            ax.set_xlabel("Date")
-            ax.set_ylabel("Returns")
-            ax.legend()
-            st.pyplot(fig)
+# Create datasets
+def create_dataset(dataset, look_back=60):
+    X, y = [], []
+    for i in range(look_back, len(dataset)):
+        X.append(dataset[i - look_back:i, 0])
+        y.append(dataset[i, 0])
+    return np.array(X), np.array(y)
 
-    # Show feature importance (only for models that support it)
-    if model_choice == 'Random Forest':
-        st.markdown("### Feature Importance")
-        feature_importances = model.feature_importances_
-        importance_df = pd.DataFrame({'Feature': X_train.columns, 'Importance': feature_importances})
-        importance_df = importance_df.sort_values(by='Importance', ascending=False)
+# Create training data
+X_train, y_train = create_dataset(train_data, 60)
+# Create testing data
+X_test, y_test = create_dataset(test_data, 60)
 
-        # Plot feature importance
-        fig, ax = plt.subplots()
-        ax.barh(importance_df['Feature'], importance_df['Importance'], color='green')
-        ax.set_title("Feature Importance")
-        ax.set_xlabel("Importance")
-        ax.set_ylabel("Feature")
-        st.pyplot(fig)
+# Reshape data for LSTM model
+X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
+X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
 
-else:
-    st.write("Please select at least one asset.")
+# Build LSTM model
+model = Sequential()
+model.add(LSTM(50, return_sequences=True, input_shape= (X_train.shape[1], 1)))
+model.add(LSTM(50, return_sequences=False))
+model.add(Dense(25))
+model.add(Dense(1))
+
+# Compile the model
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Display model summary
+st.subheader('Model Summary')
+model_summary = []
+model.summary(print_fn=lambda x: model_summary.append(x))
+st.text('\n'.join(model_summary))
+
+# Train the model
+st.subheader('Training the Model')
+with st.spinner('Training in progress...'):
+    history = model.fit(X_train, y_train, batch_size=1, epochs=n_epochs, verbose=0)
+st.success('Training completed!')
+
+# Plot training loss
+st.subheader('Training Loss')
+fig2, ax2 = plt.subplots()
+ax2.plot(history.history['loss'], label='Loss')
+ax2.set_xlabel('Epoch')
+ax2.set_ylabel('Loss')
+ax2.legend()
+st.pyplot(fig2)
+
+# Make predictions
+predictions = model.predict(X_test)
+predictions = scaler.inverse_transform(predictions)
+
+# Get the actual prices
+actual_prices = df[training_data_len:].values
+
+# Calculate RMSE
+from sklearn.metrics import mean_squared_error
+rmse = np.sqrt(mean_squared_error(actual_prices, predictions))
+
+# Plot the predictions
+def plot_predictions():
+    train = df[:training_data_len]
+    valid = df[training_data_len:]
+    valid['Predictions'] = predictions
+
+    fig, ax = plt.subplots(figsize=(12,6))
+    ax.plot(train['Close'], label='Training Data')
+    ax.plot(valid['Close'], label='Actual Price')
+    ax.plot(valid['Predictions'], label='Predicted Price')
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Price')
+    ax.legend()
+    st.pyplot(fig)
+
+st.subheader('Actual vs. Predicted Prices')
+plot_predictions()
+
+# Show the predicted vs actual values
+st.subheader('Comparison Table')
+valid = df[training_data_len:].copy()
+valid['Predictions'] = predictions
+st.write(valid[['Close', 'Predictions']])
+
+# Display RMSE
+st.write(f'**Root Mean Squared Error:** {rmse}')
+
+# Footer
+st.markdown("""
+---
+Developed by [Your Name]
+""")
