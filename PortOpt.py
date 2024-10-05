@@ -20,7 +20,7 @@ Key metrics like expected return, standard deviation, Sharpe ratio, and other ad
 st.sidebar.header('Portfolio Optimization Parameters')
 all_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX', 'BABA', 'TSM', 'JPM', 'V', 'SPY', 'BND', 'GLD', 'QQQ', 'VTI']
 symbols = st.sidebar.multiselect('Select Tickers for Optimization', options=all_symbols, default=['SPY', 'BND', 'GLD', 'QQQ', 'VTI'])
-investment_horizon = st.sidebar.slider('Investment Horizon (Years)', min_value=2, max_value=10, value=2)
+investment_horizon = st.sidebar.slider('Investment Horizon (Years)', min_value=1, max_value=5, value=2)
 risk_tolerance = st.sidebar.slider('Risk Tolerance (0 - Low, 1 - High)', min_value=0.0, max_value=1.0, value=0.5)
 
 # Load Stock Data
@@ -78,6 +78,13 @@ benchmark_returns = np.log(benchmark_data / benchmark_data.shift(1)).dropna()
 tab1, tab2 = st.tabs(["Optimal Portfolio", "Details"])
 
 with tab1:
+    st.subheader('Optimal Portfolio Allocation')
+    fig = go.Figure(data=[go.Pie(labels=weights_df['Ticker'], values=weights_df['Optimal Weight'], hole=.3)])
+    if len(weights_df[weights_df['Optimal Weight'] > 0]) == 1:
+        fig.update_traces(showlegend=False)
+    fig.update_layout(title_text="Optimal Portfolio Allocation", annotations=[dict(text='100%', x=0.5, y=0.5, font_size=20, showarrow=False)], template='plotly_dark')
+    st.plotly_chart(fig, use_container_width=True)
+
     st.subheader('Benchmark Comparison')
     cumulative_portfolio_returns = (portfolio_returns + 1).cumprod()
     cumulative_portfolio_returns.index = cumulative_portfolio_returns.index.tz_localize(None)
