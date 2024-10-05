@@ -20,11 +20,11 @@ Key metrics like expected return, standard deviation, Sharpe ratio, and other ad
 st.sidebar.header('Portfolio Optimization Parameters')
 all_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX', 'BABA', 'TSM', 'JPM', 'V', 'SPY', 'BND', 'GLD', 'QQQ', 'VTI']
 symbols = st.sidebar.multiselect('Select Tickers for Optimization', options=all_symbols, default=['SPY', 'BND', 'GLD', 'QQQ', 'VTI'])
-investment_horizon = st.sidebar.slider('Investment Horizon (Years)', min_value=1, max_value=5, value=2)
+investment_horizon = st.sidebar.slider('Investment Horizon (Years)', min_value=2, max_value=10, value=2)
 risk_tolerance = st.sidebar.slider('Risk Tolerance (0 - Low, 1 - High)', min_value=0.0, max_value=1.0, value=0.5)
 
 # Load Stock Data
-data = yf.download(symbols, period="2y")['Adj Close'].dropna()
+data = yf.download(symbols, period=f"{investment_horizon}y")['Adj Close'].dropna()
 log_returns = np.log(data / data.shift(1)).dropna()
 risk_free_rate = 0.01
 
@@ -71,7 +71,7 @@ metrics = {
 
 # Load Benchmark Data
 benchmark_symbol = 'SPY'
-benchmark_data = yf.download(benchmark_symbol, period="2y")['Adj Close'].dropna()
+benchmark_data = yf.download(benchmark_symbol, period=f"{investment_horizon}y")['Adj Close'].dropna()
 benchmark_returns = np.log(benchmark_data / benchmark_data.shift(1)).dropna()
 
 # Tabs for Navigation
