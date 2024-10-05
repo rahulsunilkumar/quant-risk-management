@@ -54,7 +54,7 @@ st.header('Monte Carlo Simulation Results')
 np.random.seed(42)
 sim_results = []
 for _ in range(num_simulations):
-    simulated_returns = log_returns.sample(n=investment_horizon * 252, replace=True).mean() * 252
+    simulated_returns = log_returns.sample(n=min(len(log_returns), investment_horizon * 252), replace=True).mean() * 252
     sim_results.append(simulated_returns)
 sim_results = pd.DataFrame(sim_results)
 
