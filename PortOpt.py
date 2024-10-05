@@ -19,7 +19,7 @@ Key metrics like expected return, standard deviation, and Sharpe ratio are used 
 st.sidebar.header('Portfolio Optimization Parameters')
 all_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX', 'BABA', 'TSM', 'JPM', 'V', 'SPY', 'BND', 'GLD', 'QQQ', 'VTI']
 symbols = st.sidebar.multiselect('Select Tickers for Optimization', options=all_symbols, default=['SPY', 'BND', 'GLD', 'QQQ', 'VTI'])
-investment_horizon = st.sidebar.slider('Investment Horizon (Days)', min_value=30, max_value=365, value=180)
+investment_horizon = st.sidebar.slider('Investment Horizon (Years)', min_value=1, max_value=5, value=2)
 risk_tolerance = st.sidebar.slider('Risk Tolerance (0 - Low, 1 - High)', min_value=0.0, max_value=1.0, value=0.5)
 
 # Load Stock Data
@@ -30,12 +30,12 @@ risk_free_rate = 0.01
 # Portfolio Optimization Metrics
 def portfolio_optimization(log_returns, risk_tolerance, risk_free_rate):
     n_assets = len(log_returns.columns)
-    mean_returns = log_returns.mean() * 252  # Annualize returns
-    cov_matrix = log_returns.cov() * 252     # Annualize covariance
+    mean_returns = log_returns.mean() * 12  # Annualize returns based on monthly data  # Annualize returns
+    cov_matrix = log_returns.cov() * 12  # Annualize covariance based on monthly data     # Annualize covariance
 
     def objective(weights):
-        portfolio_return = np.dot(weights, mean_returns)
-        portfolio_volatility = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
+        portfolio_return = np.dot(weights, mean_returns) * investment_horizon
+        portfolio_volatility = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights))) * np.sqrt(investment_horizon)
         return -((1 - risk_tolerance) * portfolio_return - risk_tolerance * portfolio_volatility)
 
     constraints = ({'type': 'eq', 'fun': lambda weights: np.sum(weights) - 1})
