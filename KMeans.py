@@ -12,8 +12,8 @@ import matplotlib.cm as cm
 # Set Page Configuration for better visuals
 st.set_page_config(page_title="Asset Clustering App", layout="wide")
 
-# Load Stock Dataset from Yahoo Finance
-symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA']
+# Load Stock Dataset from Yahoo Financ
+symbols = ['SPY', 'BND', 'GLD', 'QQQ', 'VTI']
 data = yf.download(symbols, start='2023-01-01', end='2023-12-31')['Adj Close']
 data = data.pct_change().dropna()
 
