@@ -69,16 +69,39 @@ metrics = {
     'Value at Risk (VaR)': portfolio_returns.value_at_risk()
 }
 
+# Load Benchmark Data
+benchmark_symbol = 'SPY'
+benchmark_data = yf.download(benchmark_symbol, period="2y")['Adj Close'].dropna()
+benchmark_returns = np.log(benchmark_data / benchmark_data.shift(1)).dropna()
+
 # Tabs for Navigation
 tab1, tab2 = st.tabs(["Optimal Portfolio", "Details"])
 
 with tab1:
+    st.subheader('Benchmark Comparison')
+    cumulative_portfolio_returns = (portfolio_returns + 1).cumprod()
+    cumulative_benchmark_returns = (benchmark_returns + 1).cumprod()
+    comparison_df = pd.DataFrame({"Portfolio": cumulative_portfolio_returns, "Benchmark (SPY)": cumulative_benchmark_returns})
+    st.line_chart(comparison_df, use_container_width=True)
+
     st.subheader('Optimal Portfolio Allocation')
     fig = go.Figure(data=[go.Pie(labels=weights_df['Ticker'], values=weights_df['Optimal Weight'], hole=.3)])
     if len(weights_df[weights_df['Optimal Weight'] > 0]) == 1:
         fig.update_traces(showlegend=False)
     fig.update_layout(title_text="Optimal Portfolio Allocation", annotations=[dict(text='100%', x=0.5, y=0.5, font_size=20, showarrow=False)], template='plotly_dark')
     st.plotly_chart(fig, use_container_width=True)
+    
+    st.subheader('Risk-Return Trade-off')
+    fig_tradeoff = go.Figure()
+    for ticker in symbols:
+        asset_return = log_returns[ticker].mean() * 12
+        asset_volatility = log_returns[ticker].std() * np.sqrt(12)
+        fig_tradeoff.add_trace(go.Scatter(x=[asset_volatility], y=[asset_return], mode='markers', name=ticker))
+    portfolio_volatility = portfolio_std_dev
+    portfolio_return = expected_return
+    fig_tradeoff.add_trace(go.Scatter(x=[portfolio_volatility], y=[portfolio_return], mode='markers', name='Optimized Portfolio', marker=dict(color='red', size=10)))
+    fig_tradeoff.update_layout(title='Risk-Return Trade-off', xaxis_title='Volatility (Risk)', yaxis_title='Expected Return', template='plotly_dark')
+    st.plotly_chart(fig_tradeoff, use_container_width=True)
     
     st.subheader('Portfolio Metrics')
     col1, col2, col3 = st.columns([1, 1, 1])
@@ -100,6 +123,12 @@ with tab1:
     
 with tab2:
     st.subheader('Detailed Metrics Summary')
+    st.subheader('Correlation Heatmap')
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.heatmap(data.corr(), annot=True, cmap='coolwarm', ax=ax)
+    st.pyplot(fig)
     col1, col2 = st.columns([1, 1.5])
     
     with col1:
