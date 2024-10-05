@@ -14,7 +14,7 @@ st.set_page_config(page_title="Asset Clustering App", layout="wide")
 
 # Load Stock Dataset from Yahoo Financ
 all_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX', 'BABA', 'TSM', 'JPM', 'V', 'SPY', 'BND', 'GLD', 'QQQ', 'VTI']
-symbols = st.sidebar.multiselect('Features to Include', options=all_symbols, default=['SPY', 'BND', 'GLD', 'QQQ', 'VTI'])
+features = st.sidebar.multiselect('Features to Include', options=all_symbols, default=['SPY', 'BND', 'GLD', 'QQQ', 'VTI'])
 data = yf.download(all_symbols, start='2023-01-01', end='2023-12-31')['Adj Close']
 data = data.pct_change().dropna()
 
