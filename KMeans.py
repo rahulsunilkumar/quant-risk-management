@@ -38,7 +38,7 @@ st.sidebar.header('Clustering Parameters')
 
 # Sidebar Inputs
 n_clusters = st.sidebar.slider('Number of Clusters', min_value=2, max_value=10, value=4)
-features = st.sidebar.multiselect('Features to Include', options=data.columns, default=['AAPL', 'MSFT', 'TSLA', 'esg_score'])
+features = st.sidebar.multiselect('Features to Include', options=data.columns, default=list(data.columns))
 
 # Filter dataset to selected features
 filtered_data = data[features]
