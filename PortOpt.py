@@ -19,27 +19,18 @@ The goal of this project is to show how machine learning can be leveraged in fin
 
 # Sidebar Inputs
 st.sidebar.header('Portfolio Optimization Parameters')
-symbols_input = st.sidebar.text_input('Enter Tickers (separated by commas)', 'AAPL, MSFT, GOOGL, AMZN, NVDA, TSLA')
+all_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX', 'BABA', 'TSM', 'JPM', 'V']
+symbols = st.sidebar.multiselect('Select Tickers for Optimization', options=all_symbols, default=['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA'])
 investment_horizon = st.sidebar.slider('Investment Horizon (Days)', min_value=30, max_value=365, value=180)
 risk_tolerance = st.sidebar.slider('Risk Tolerance (0 - Low, 1 - High)', min_value=0.0, max_value=1.0, value=0.5)
 
-symbols = [s.strip().upper() for s in symbols_input.split(',')]
-
 # Load Stock Data
 data = yf.download(symbols, period="2y")['Adj Close'].dropna()
-st.write("### Historical Adjusted Close Prices", data.tail())
-
-# Feature Engineering: Calculate Returns
 returns = data.pct_change().dropna()
-st.write("### Daily Returns", returns.tail())
-
-# Split Data for Training and Testing
 train_data, test_data = train_test_split(returns, test_size=0.2, shuffle=False)
 
 # Machine Learning Model for Return Prediction
-st.write("### Predicting Future Returns with Linear Regression")
 predictions = pd.DataFrame(index=test_data.index, columns=test_data.columns)
-
 for symbol in symbols:
     model = LinearRegression()
     X_train = np.arange(len(train_data)).reshape(-1, 1)
@@ -47,8 +38,6 @@ for symbol in symbols:
     model.fit(X_train, y_train)
     X_test = np.arange(len(train_data), len(train_data) + len(test_data)).reshape(-1, 1)
     predictions[symbol] = model.predict(X_test)
-
-st.write("### Predicted Returns", predictions.tail())
 
 # Portfolio Optimization
 def portfolio_optimization(predicted_returns, risk_tolerance):
@@ -68,23 +57,32 @@ def portfolio_optimization(predicted_returns, risk_tolerance):
 
     return result.x
 
-st.write("### Optimizing Portfolio Weights")
 optimal_weights = portfolio_optimization(predictions, risk_tolerance)
 weights_df = pd.DataFrame({'Ticker': symbols, 'Optimal Weight': optimal_weights})
-st.write(weights_df)
 
-# Visualizing Portfolio Allocation
-fig = go.Figure(data=[go.Pie(labels=weights_df['Ticker'], values=weights_df['Optimal Weight'], hole=.3)])
-fig.update_layout(title_text="Optimal Portfolio Allocation")
-st.plotly_chart(fig)
+# Tabs for Navigation
+tab1, tab2, tab3 = st.tabs(["Portfolio Allocation", "Predicted Returns", "Insights"])
 
-# Insights Section
-st.header('Insights')
-st.write("""
-### Insights from Portfolio Optimization
-- **Optimal Weights**: The calculated optimal weights aim to balance risk and return based on the selected risk tolerance.
-- **Return Prediction**: The machine learning model used (Linear Regression) helps predict future returns, which is used to determine the optimal allocation.
-- **Interactive Adjustment**: Use the sidebar to adjust your risk tolerance and observe how the optimal allocation changes.
+with tab1:
+    st.subheader('Optimal Portfolio Allocation')
+    fig = go.Figure(data=[go.Pie(labels=weights_df['Ticker'], values=weights_df['Optimal Weight'], hole=.3)])
+    fig.update_layout(title_text="Optimal Portfolio Allocation")
+    st.plotly_chart(fig)
+    st.write(weights_df)
 
-This approach provides a basic yet powerful demonstration of how machine learning and optimization techniques can be used together for effective portfolio management.
-""")
+with tab2:
+    st.subheader('Predicted Returns')
+    st.write("### Historical Adjusted Close Prices", data.tail())
+    st.write("### Daily Returns", returns.tail())
+    st.write("### Predicted Returns", predictions.tail())
+
+with tab3:
+    st.subheader('Insights')
+    st.write("""
+    ### Insights from Portfolio Optimization
+    - **Optimal Weights**: The calculated optimal weights aim to balance risk and return based on the selected risk tolerance.
+    - **Return Prediction**: The machine learning model used (Linear Regression) helps predict future returns, which is used to determine the optimal allocation.
+    - **Interactive Adjustment**: Use the sidebar to adjust your risk tolerance and observe how the optimal allocation changes.
+
+    This approach provides a basic yet powerful demonstration of how machine learning and optimization techniques can be used together for effective portfolio management.
+    """)
