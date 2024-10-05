@@ -64,7 +64,6 @@ metrics = {
     'Sharpe Ratio': portfolio_returns.sharpe(rf=risk_free_rate),
     'Sortino Ratio': portfolio_returns.sortino(rf=risk_free_rate),
     'Calmar Ratio': portfolio_returns.calmar(),
-    'Stability': portfolio_returns.stability(),
     'Skewness': portfolio_returns.skew(),
     'Kurtosis': portfolio_returns.kurtosis(),
     'Value at Risk (VaR)': portfolio_returns.value_at_risk()
