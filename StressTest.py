@@ -67,6 +67,8 @@ sns.histplot(sim_results.sum(), kde=True, ax=ax)
 ax.set_title('Distribution of Simulated Portfolio Returns')
 st.pyplot(fig)
 
+st.write("The probability distribution of returns provides insights into the range of potential outcomes for the portfolio. This helps in understanding the likelihood of different return levels and in making informed investment decisions.")
+
 # Backtesting
 st.header('Backtesting Portfolio Performance')
 cumulative_returns = (log_returns + 1).cumprod()
