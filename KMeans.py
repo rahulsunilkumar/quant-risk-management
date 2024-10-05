@@ -5,47 +5,33 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import streamlit as st
 import yfinance as yf
+import shap
 
-# Load ESG Dataset from Yahoo Finance
-# ESG-focused stocks (example selection based on ESG funds and ratings)
-symbols = ['AAPL', 'MSFT', 'TSLA', 'NVDA', 'ADBE', 'ORCL', 'INTC', 'GOOGL', 'AMZN', 'CRM']
+# Load Stock Dataset from Yahoo Finance
+symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA']
 
 # Download stock data
 data = yf.download(symbols, start='2023-01-01', end='2023-12-31')['Adj Close']
 data = data.pct_change().dropna()
 
-# Download ESG scores from Yahoo Finance
-esg_scores = {}
-for symbol in symbols:
-    ticker = yf.Ticker(symbol)
-    esg_data = ticker.sustainability
-    if esg_data is not None and 'totalEsg' in esg_data.columns:
-        esg_scores[symbol] = esg_data['totalEsg'].values[0]
-    else:
-        esg_scores[symbol] = np.nan
-
-# Drop stocks with missing ESG scores
-esg_scores = {k: v for k, v in esg_scores.items() if not np.isnan(v)}
-symbols = list(esg_scores.keys())
-data = data[symbols]
-
-# Add ESG scores to the dataframe
-data['esg_score'] = np.mean([esg_scores[symbol] for symbol in symbols])
-
 # Streamlit UI
-st.title('ESG Asset Clustering Using Machine Learning')
+st.title('Asset Clustering Using Machine Learning')
 st.sidebar.header('Clustering Parameters')
 
 # Sidebar Inputs
 n_clusters = st.sidebar.slider('Number of Clusters', min_value=2, max_value=10, value=4)
 features = st.sidebar.multiselect('Features to Include', options=data.columns, default=list(data.columns))
+apply_pca = st.sidebar.checkbox('Apply PCA for Dimensionality Reduction', value=True)
 
 # Filter dataset to selected features
 filtered_data = data[features]
 
 # Apply PCA for Dimensionality Reduction (optional)
-pca = PCA(n_components=2)
-reduced_data = pca.fit_transform(filtered_data)
+if apply_pca:
+    pca = PCA(n_components=2)
+    reduced_data = pca.fit_transform(filtered_data)
+else:
+    reduced_data = filtered_data.values
 
 # Apply KMeans Clustering
 kmeans = KMeans(n_clusters=n_clusters, random_state=42)
@@ -60,8 +46,8 @@ for cluster in range(n_clusters):
     cluster_data = reduced_data[clusters == cluster]
     ax.scatter(cluster_data[:, 0], cluster_data[:, 1], label=f'Cluster {cluster}')
 
-ax.set_xlabel('PCA Component 1')
-ax.set_ylabel('PCA Component 2')
+ax.set_xlabel('PCA Component 1' if apply_pca else 'Feature 1')
+ax.set_ylabel('PCA Component 2' if apply_pca else 'Feature 2')
 ax.legend()
 st.pyplot(fig)
 
@@ -72,6 +58,15 @@ for cluster in range(n_clusters):
     cluster_info = data[data['Cluster'] == cluster]
     st.write(cluster_info.describe())
 
+# Feature Importance Visualization using SHAP
+st.header('Feature Importance Visualization')
+explainer = shap.KernelExplainer(kmeans.predict, filtered_data)
+shap_values = explainer.shap_values(filtered_data)
+
+shap.summary_plot(shap_values, filtered_data, feature_names=features, show=False)
+plt.title('Feature Importance in Clustering')
+st.pyplot(plt.gcf())
+
 # Add Insights Section
 st.header('Insights')
-st.write("Explore how different clusters of ESG assets behave under various market conditions. Adjust the clustering parameters to gain insights into how ESG scores and financial metrics correlate.")
+st.write("Explore how different clusters of assets behave under various market conditions. Adjust the clustering parameters to gain insights into how different features correlate.")
