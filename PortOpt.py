@@ -64,22 +64,44 @@ metrics = {
     'Sharpe Ratio': portfolio_returns.sharpe(rf=risk_free_rate),
     'Sortino Ratio': portfolio_returns.sortino(rf=risk_free_rate),
     'Calmar Ratio': portfolio_returns.calmar(),
+    'Stability': portfolio_returns.stability(),
     'Skewness': portfolio_returns.skew(),
     'Kurtosis': portfolio_returns.kurtosis(),
     'Value at Risk (VaR)': portfolio_returns.value_at_risk()
 }
 
 # Tabs for Navigation
-tab1, tab2 = st.tabs(["Optimal Portfolio", "Metrics Summary"])
+tab1, tab2 = st.tabs(["Optimal Portfolio", "Details"])
 
 with tab1:
     st.subheader('Optimal Portfolio Allocation')
     fig = go.Figure(data=[go.Pie(labels=weights_df['Ticker'], values=weights_df['Optimal Weight'], hole=.3)])
     if len(weights_df[weights_df['Optimal Weight'] > 0]) == 1:
         fig.update_traces(showlegend=False)
-    fig.update_layout(title_text="Optimal Portfolio Allocation", annotations=[dict(text='100%', x=0.5, y=0.5, font_size=20, showarrow=False)] if len(weights_df[weights_df['Optimal Weight'] > 0]) == 1 else None)
-    st.plotly_chart(fig)
+    fig.update_layout(title_text="Optimal Portfolio Allocation", annotations=[dict(text='100%', x=0.5, y=0.5, font_size=20, showarrow=False)], template='plotly_dark') == 1 else None)
+    st.plotly_chart(fig, use_container_width=True)
     st.write(weights_df)
+
+    st.subheader('Portfolio Metrics')
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.metric(label="Expected Annual Return", value=f"{expected_return:.2%}")
+        st.metric(label="Portfolio Standard Deviation (Risk)", value=f"{portfolio_std_dev:.2%}")
+    with col2:
+        st.metric(label="Sharpe Ratio", value=f"{sharpe_ratio:.2f}")
+
+    st.subheader('Additional Portfolio Metrics')
+    col3, col4 = st.columns([1, 1])
+    with col3:
+        st.metric(label="CAGR", value=f"{metrics['CAGR']:.2%}")
+        st.metric(label="Max Drawdown", value=f"{metrics['Max Drawdown']:.2%}")
+        st.metric(label="Volatility", value=f"{metrics['Volatility']:.2%}")
+        st.metric(label="Sortino Ratio", value=f"{metrics['Sortino Ratio']:.2f}")
+    with col4:
+        st.metric(label="Calmar Ratio", value=f"{metrics['Calmar Ratio']:.2f}")
+        st.metric(label="Skewness", value=f"{metrics['Skewness']:.2f}")
+        st.metric(label="Kurtosis", value=f"{metrics['Kurtosis']:.2f}")
+        st.metric(label="Value at Risk (VaR)", value=f"{metrics['Value at Risk (VaR)']:.2f}")
 
     st.subheader('Portfolio Metrics')
     col1, col2 = st.columns([1, 1])
