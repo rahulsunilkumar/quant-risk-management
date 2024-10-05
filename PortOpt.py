@@ -89,14 +89,14 @@ with tab2:
         st.write("### Dynamic Summary of Predicted Returns")
         mean_pred_returns = predictions.mean()
         fig = go.Figure()
-        fig.add_trace(go.Bar(x=mean_pred_returns.index, y=mean_pred_returns.values, name='Mean Predicted Return'))
+        fig.add_trace(go.Bar(y=mean_pred_returns.index, x=mean_pred_returns.values, name='Mean Predicted Return', orientation='h'))
         fig.update_layout(
-            title_text='Mean Predicted Returns for Selected Assets',
-            xaxis_title='Ticker',
-            yaxis_title='Mean Predicted Return',
-            height=600,
-            width=700
-        )
+    title_text='Mean Predicted Returns for Selected Assets',
+    yaxis_title='Ticker',
+    xaxis_title='Mean Predicted Return',
+    height=600,
+    width=700
+)
         st.plotly_chart(fig, use_container_width=True)
 
 
