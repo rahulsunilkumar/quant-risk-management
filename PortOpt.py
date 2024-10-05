@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 import yfinance as yf
-import requests
 from scipy.optimize import minimize
 import plotly.graph_objects as go
 
@@ -13,7 +12,7 @@ st.title('Portfolio Optimization Using Machine Learning and Advanced Metrics')
 st.write("""
 This application demonstrates how machine learning and advanced financial metrics can be used to optimize a portfolio of financial assets. By estimating future returns and applying optimization techniques, we aim to construct an optimal portfolio that balances return and risk.
 
-Key metrics like expected return, standard deviation, and Sharpe ratio are used to assess the optimal allocation, with risk-free rate fetched from the Federal Reserve Economic Data (FRED) API.
+Key metrics like expected return, standard deviation, and Sharpe ratio are used to assess the optimal allocation.
 """)
 
 # Sidebar Inputs
@@ -26,27 +25,7 @@ risk_tolerance = st.sidebar.slider('Risk Tolerance (0 - Low, 1 - High)', min_val
 # Load Stock Data
 data = yf.download(symbols, period="2y")['Adj Close'].dropna()
 log_returns = np.log(data / data.shift(1)).dropna()
-
-# Get Risk-Free Rate from FRED API
-st.sidebar.header('Risk-Free Rate')
-fred_api_key = "YOUR_FRED_API_KEY"
-risk_free_rate = 0.01  # Default value
-try:
-    response = requests.get(f"https://api.stlouisfed.org/fred/series/observations", params={
-        "series_id": "DGS10",
-        "api_key": fred_api_key,
-        "file_type": "json",
-        "frequency": "d"
-    })
-    if response.status_code == 200:
-        data_json = response.json()
-        latest_rate = float(data_json['observations'][-1]['value'])
-        risk_free_rate = latest_rate / 100  # Convert to decimal
-        st.sidebar.text(f"Latest Risk-Free Rate: {risk_free_rate:.2%}")
-    else:
-        st.sidebar.warning("Unable to fetch risk-free rate from FRED, using default 1%.")
-except Exception as e:
-    st.sidebar.warning("Error fetching risk-free rate from FRED, using default 1%.")
+risk_free_rate = 0.01
 
 # Portfolio Optimization Metrics
 def portfolio_optimization(log_returns, risk_tolerance, risk_free_rate):
@@ -84,7 +63,6 @@ with tab1:
     st.plotly_chart(fig)
     st.write(weights_df)
 
-with tab2:
     st.subheader('Portfolio Metrics')
     col1, col2 = st.columns([1, 1])
     with col1:
@@ -92,4 +70,18 @@ with tab2:
         st.metric(label="Portfolio Standard Deviation (Risk)", value=f"{portfolio_std_dev:.2%}")
     with col2:
         st.metric(label="Sharpe Ratio", value=f"{sharpe_ratio:.2f}")
-    st.write("The metrics presented above provide a comprehensive summary of the optimal portfolio's performance, allowing you to assess both risk and reward.")
+
+with tab2:
+    st.subheader('Detailed Metrics Summary')
+    col1, col2 = st.columns([1, 1.5])
+    
+    with col1:
+        st.write("### Historical Adjusted Close Prices")
+        st.dataframe(data.tail(), height=300)
+
+        st.write("### Daily Log Returns")
+        st.dataframe(log_returns.tail(), height=300)
+
+    with col2:
+        st.write("### Portfolio Allocation Summary")
+        st.write(weights_df)
