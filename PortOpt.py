@@ -136,11 +136,11 @@ with tab2:
     with col1:
         st.write("### Historical Adjusted Close Prices")
         data.index = data.index.date
-st.dataframe(data.tail(), height=300)
+    st.dataframe(data.tail(), height=300)
 
         st.write("### Daily Log Returns")
         log_returns.index = log_returns.index.date
-st.dataframe(log_returns.tail(), height=300)
+    st.dataframe(log_returns.tail(), height=300)
 
     with col2:
         st.write("### Portfolio Allocation Summary")
