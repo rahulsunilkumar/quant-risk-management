@@ -4,6 +4,7 @@ import streamlit as st
 import yfinance as yf
 from scipy.optimize import minimize
 import plotly.graph_objects as go
+import quantstats as qs
 
 st.set_page_config(page_title="Portfolio Optimization with Advanced Metrics", layout="wide")
 
@@ -12,7 +13,7 @@ st.title('Portfolio Optimization Using Machine Learning and Advanced Metrics')
 st.write("""
 This application demonstrates how machine learning and advanced financial metrics can be used to optimize a portfolio of financial assets. By estimating future returns and applying optimization techniques, we aim to construct an optimal portfolio that balances return and risk.
 
-Key metrics like expected return, standard deviation, and Sharpe ratio are used to assess the optimal allocation.
+Key metrics like expected return, standard deviation, Sharpe ratio, and other advanced metrics are used to assess the optimal allocation.
 """)
 
 # Sidebar Inputs
@@ -30,8 +31,8 @@ risk_free_rate = 0.01
 # Portfolio Optimization Metrics
 def portfolio_optimization(log_returns, risk_tolerance, risk_free_rate):
     n_assets = len(log_returns.columns)
-    mean_returns = log_returns.mean() * 12  # Annualize returns based on monthly data  # Annualize returns
-    cov_matrix = log_returns.cov() * 12  # Annualize covariance based on monthly data     # Annualize covariance
+    mean_returns = log_returns.mean() * 12  # Annualize returns based on monthly data
+    cov_matrix = log_returns.cov() * 12  # Annualize covariance based on monthly data
 
     def objective(weights):
         portfolio_return = np.dot(weights, mean_returns) * investment_horizon
@@ -52,6 +53,22 @@ def portfolio_optimization(log_returns, risk_tolerance, risk_free_rate):
 
 optimal_weights, expected_return, portfolio_std_dev, sharpe_ratio = portfolio_optimization(log_returns, risk_tolerance, risk_free_rate)
 weights_df = pd.DataFrame({'Ticker': symbols, 'Optimal Weight': optimal_weights})
+
+# Portfolio Performance Metrics using QuantStats
+portfolio_returns = log_returns.dot(optimal_weights)
+qs.extend_pandas()
+metrics = {
+    'CAGR': portfolio_returns.cagr(),
+    'Max Drawdown': portfolio_returns.max_drawdown(),
+    'Volatility': portfolio_returns.volatility(),
+    'Sharpe Ratio': portfolio_returns.sharpe(rf=risk_free_rate),
+    'Sortino Ratio': portfolio_returns.sortino(rf=risk_free_rate),
+    'Calmar Ratio': portfolio_returns.calmar(),
+    'Stability': portfolio_returns.stability(),
+    'Skewness': portfolio_returns.skew(),
+    'Kurtosis': portfolio_returns.kurtosis(),
+    'Value at Risk (VaR)': portfolio_returns.value_at_risk()
+}
 
 # Tabs for Navigation
 tab1, tab2 = st.tabs(["Optimal Portfolio", "Metrics Summary"])
@@ -87,3 +104,7 @@ with tab2:
     with col2:
         st.write("### Portfolio Allocation Summary")
         st.write(weights_df)
+
+        st.write("### Additional Portfolio Metrics")
+        for metric, value in metrics.items():
+            st.write(f"**{metric}**: {value:.2f}")
