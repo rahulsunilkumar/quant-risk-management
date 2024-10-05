@@ -4,9 +4,13 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import streamlit as st
+import yfinance as yf
 
-# Load ESG Dataset (for demonstration, we use a placeholder CSV load)
-data = pd.read_csv('esg_stock_data.csv')
+# Load ESG Dataset from Yahoo Finance
+symbols = ['AAPL', 'MSFT', 'TSLA', 'GOOGL', 'AMZN']  # Example ESG-focused stocks
+data = yf.download(symbols, start='2023-01-01', end='2023-12-31')['Adj Close']
+data = data.pct_change().dropna()
+data['esg_score'] = [np.random.uniform(50, 100) for _ in range(len(data))]  # Placeholder ESG scores
 
 # Streamlit UI
 st.title('ESG Asset Clustering Using Machine Learning')
@@ -14,7 +18,7 @@ st.sidebar.header('Clustering Parameters')
 
 # Sidebar Inputs
 n_clusters = st.sidebar.slider('Number of Clusters', min_value=2, max_value=10, value=4)
-features = st.sidebar.multiselect('Features to Include', options=data.columns, default=['return', 'volatility', 'esg_score'])
+features = st.sidebar.multiselect('Features to Include', options=data.columns, default=['AAPL', 'MSFT', 'TSLA', 'esg_score'])
 
 # Filter dataset to selected features
 filtered_data = data[features]
