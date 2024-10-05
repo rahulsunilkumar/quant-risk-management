@@ -13,7 +13,8 @@ import matplotlib.cm as cm
 st.set_page_config(page_title="Asset Clustering App", layout="wide")
 
 # Load Stock Dataset from Yahoo Financ
-symbols = ['SPY', 'BND', 'GLD', 'QQQ', 'VTI']
+all_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX', 'BABA', 'TSM', 'JPM', 'V', 'SPY', 'BND', 'GLD', 'QQQ', 'VTI']
+symbols = st.sidebar.multiselect('Select Tickers for Optimization', options=all_symbols, default=['SPY', 'BND', 'GLD', 'QQQ', 'VTI'])
 data = yf.download(symbols, start='2023-01-01', end='2023-12-31')['Adj Close']
 data = data.pct_change().dropna()
 
