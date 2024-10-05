@@ -61,7 +61,7 @@ optimal_weights = portfolio_optimization(predictions, risk_tolerance)
 weights_df = pd.DataFrame({'Ticker': symbols, 'Optimal Weight': optimal_weights})
 
 # Tabs for Navigation
-tab1, tab2, tab3 = st.tabs(["Portfolio Allocation", "Predicted Returns", "Insights"])
+tab1, tab2 = st.tabs(["Portfolio Allocation", "Predicted Returns"])
 
 with tab1:
     st.subheader('Optimal Portfolio Allocation')
@@ -75,14 +75,10 @@ with tab2:
     st.write("### Historical Adjusted Close Prices", data.tail())
     st.write("### Daily Returns", returns.tail())
     st.write("### Predicted Returns", predictions.tail())
+    st.write("### Dynamic Summary of Predicted Returns")
+    mean_pred_returns = predictions.mean()
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=mean_pred_returns.index, y=mean_pred_returns.values, name='Mean Predicted Return'))
+    fig.update_layout(title_text='Mean Predicted Returns for Selected Assets', xaxis_title='Ticker', yaxis_title='Mean Predicted Return')
+    st.plotly_chart(fig)
 
-with tab3:
-    st.subheader('Insights')
-    st.write("""
-    ### Insights from Portfolio Optimization
-    - **Optimal Weights**: The calculated optimal weights aim to balance risk and return based on the selected risk tolerance.
-    - **Return Prediction**: The machine learning model used (Linear Regression) helps predict future returns, which is used to determine the optimal allocation.
-    - **Interactive Adjustment**: Use the sidebar to adjust your risk tolerance and observe how the optimal allocation changes.
-
-    This approach provides a basic yet powerful demonstration of how machine learning and optimization techniques can be used together for effective portfolio management.
-    """)
