@@ -80,7 +80,9 @@ tab1, tab2 = st.tabs(["Optimal Portfolio", "Details"])
 with tab1:
     st.subheader('Benchmark Comparison')
     cumulative_portfolio_returns = (portfolio_returns + 1).cumprod()
+    cumulative_portfolio_returns.index = cumulative_portfolio_returns.index.tz_localize(None)
     cumulative_benchmark_returns = (benchmark_returns + 1).cumprod()
+    cumulative_benchmark_returns.index = cumulative_benchmark_returns.index.tz_localize(None)
     comparison_df = pd.DataFrame({"Portfolio": cumulative_portfolio_returns, "Benchmark (SPY)": cumulative_benchmark_returns})
     st.line_chart(comparison_df, use_container_width=True)
 
