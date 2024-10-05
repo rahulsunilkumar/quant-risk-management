@@ -19,8 +19,8 @@ The goal of this project is to show how machine learning can be leveraged in fin
 
 # Sidebar Inputs
 st.sidebar.header('Portfolio Optimization Parameters')
-all_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX', 'BABA', 'TSM', 'JPM', 'V']
-symbols = st.sidebar.multiselect('Select Tickers for Optimization', options=all_symbols, default=['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA'])
+all_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX', 'BABA', 'TSM', 'JPM', 'V', 'SPY', 'BND', 'GLD', 'QQQ', 'VTI']
+symbols = st.sidebar.multiselect('Select Tickers for Optimization', options=all_symbols, default=['SPY', 'BND', 'GLD', 'QQQ', 'VTI'])
 investment_horizon = st.sidebar.slider('Investment Horizon (Days)', min_value=30, max_value=365, value=180)
 risk_tolerance = st.sidebar.slider('Risk Tolerance (0 - Low, 1 - High)', min_value=0.0, max_value=1.0, value=0.5)
 
