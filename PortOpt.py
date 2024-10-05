@@ -44,9 +44,9 @@ try:
         risk_free_rate = latest_rate / 100  # Convert to decimal
         st.sidebar.text(f"Latest Risk-Free Rate: {risk_free_rate:.2%}")
     else:
-        st.sidebar.text("Unable to fetch risk-free rate, using default 1%.")
+        st.sidebar.warning("Unable to fetch risk-free rate from FRED, using default 1%.")
 except Exception as e:
-    st.sidebar.text("Error fetching risk-free rate, using default 1%.")
+    st.sidebar.warning("Error fetching risk-free rate from FRED, using default 1%.")
 
 # Portfolio Optimization Metrics
 def portfolio_optimization(log_returns, risk_tolerance, risk_free_rate):
@@ -74,15 +74,22 @@ def portfolio_optimization(log_returns, risk_tolerance, risk_free_rate):
 optimal_weights, expected_return, portfolio_std_dev, sharpe_ratio = portfolio_optimization(log_returns, risk_tolerance, risk_free_rate)
 weights_df = pd.DataFrame({'Ticker': symbols, 'Optimal Weight': optimal_weights})
 
-# Displaying Results
-st.subheader('Optimal Portfolio Results')
-fig = go.Figure(data=[go.Pie(labels=weights_df['Ticker'], values=weights_df['Optimal Weight'], hole=.3)])
-fig.update_layout(title_text="Optimal Portfolio Allocation")
-st.plotly_chart(fig)
-st.write(weights_df)
+# Tabs for Navigation
+tab1, tab2 = st.tabs(["Optimal Portfolio", "Metrics Summary"])
 
-# Portfolio Metrics
-st.subheader('Portfolio Metrics')
-st.write(f"**Expected Annual Return**: {expected_return:.2%}")
-st.write(f"**Portfolio Standard Deviation (Risk)**: {portfolio_std_dev:.2%}")
-st.write(f"**Sharpe Ratio**: {sharpe_ratio:.2f}")
+with tab1:
+    st.subheader('Optimal Portfolio Allocation')
+    fig = go.Figure(data=[go.Pie(labels=weights_df['Ticker'], values=weights_df['Optimal Weight'], hole=.3)])
+    fig.update_layout(title_text="Optimal Portfolio Allocation")
+    st.plotly_chart(fig)
+    st.write(weights_df)
+
+with tab2:
+    st.subheader('Portfolio Metrics')
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.metric(label="Expected Annual Return", value=f"{expected_return:.2%}")
+        st.metric(label="Portfolio Standard Deviation (Risk)", value=f"{portfolio_std_dev:.2%}")
+    with col2:
+        st.metric(label="Sharpe Ratio", value=f"{sharpe_ratio:.2f}")
+    st.write("The metrics presented above provide a comprehensive summary of the optimal portfolio's performance, allowing you to assess both risk and reward.")
