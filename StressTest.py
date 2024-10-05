@@ -25,12 +25,12 @@ These tools work together to provide a robust understanding of both the resilien
 st.sidebar.header('Portfolio Parameters')
 all_symbols = ['SPY', 'BND', 'GLD', 'QQQ', 'VTI']
 symbols = st.sidebar.multiselect('Select Tickers for Analysis', options=all_symbols, default=all_symbols)
-investment_horizon = st.sidebar.slider('Investment Horizon (Years)', min_value=1, max_value=5, value=2)
+investment_horizon_days = st.sidebar.slider('Investment Horizon (Days)', min_value=30, max_value=730, value=365)
 num_simulations = st.sidebar.slider('Number of Monte Carlo Simulations', min_value=100, max_value=10000, value=1000)
 stress_scenario = st.sidebar.selectbox('Select Stress Scenario', ['2008 Financial Crisis', 'COVID-19 Market Crash', 'Custom Scenario'])
 
 # Load Stock Data
-data = yf.download(symbols, period=f"{investment_horizon}y")['Adj Close'].dropna()
+data = yf.download(symbols, period="5y")['Adj Close'].dropna()
 log_returns = np.log(data / data.shift(1)).dropna()
 
 # Stress Testing
@@ -54,7 +54,7 @@ st.header('Monte Carlo Simulation Results')
 np.random.seed(42)
 sim_results = []
 for _ in range(num_simulations):
-    simulated_returns = log_returns.sample(n=min(len(log_returns), investment_horizon * 252), replace=True).mean() * 252
+    simulated_returns = log_returns.sample(n=min(len(log_returns), investment_horizon_days), replace=True).mean() * 252
     sim_results.append(simulated_returns)
 sim_results = pd.DataFrame(sim_results)
 
