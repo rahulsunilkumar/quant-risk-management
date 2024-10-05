@@ -59,7 +59,9 @@ tab1, tab2 = st.tabs(["Optimal Portfolio", "Metrics Summary"])
 with tab1:
     st.subheader('Optimal Portfolio Allocation')
     fig = go.Figure(data=[go.Pie(labels=weights_df['Ticker'], values=weights_df['Optimal Weight'], hole=.3)])
-    fig.update_layout(title_text="Optimal Portfolio Allocation")
+    if len(weights_df[weights_df['Optimal Weight'] > 0]) == 1:
+        fig.update_traces(showlegend=False)
+    fig.update_layout(title_text="Optimal Portfolio Allocation", annotations=[dict(text='100%', x=0.5, y=0.5, font_size=20, showarrow=False)] if len(weights_df[weights_df['Optimal Weight'] > 0]) == 1 else None)
     st.plotly_chart(fig)
     st.write(weights_df)
 
