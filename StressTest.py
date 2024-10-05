@@ -15,6 +15,7 @@ We use **Stress Testing** to analyze portfolio performance under extreme market 
 to predict potential future behavior under varying scenarios.
 
 These analyses help assess portfolio resilience and potential returns over different time horizons.
+The synergy between **Stress Testing** and **Monte Carlo Simulations** provides a holistic understanding of both the resilience and the probabilistic future outcomes of the portfolio.
 """)
 
 # Sidebar Inputs
