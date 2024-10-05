@@ -11,4 +11,4 @@ nltk
 seaborn
 shap
 quantstats
-ipython
+IPython
