@@ -64,8 +64,7 @@ metrics = {
     'Sharpe Ratio': portfolio_returns.sharpe(rf=risk_free_rate),
     'Sortino Ratio': portfolio_returns.sortino(rf=risk_free_rate),
     'Calmar Ratio': portfolio_returns.calmar(),
-    'Stability': portfolio_returns.stability(),
-    'Skewness': portfolio_returns.skew(),
+        'Skewness': portfolio_returns.skew(),
     'Kurtosis': portfolio_returns.kurtosis(),
     'Value at Risk (VaR)': portfolio_returns.value_at_risk()
 }
@@ -98,14 +97,7 @@ with tab1:
         st.metric(label="Kurtosis", value=f"{metrics['Kurtosis']:.2f}")
         st.metric(label="Value at Risk (VaR)", value=f"{metrics['Value at Risk (VaR)']:.2f}")
 
-    st.subheader('Portfolio Metrics')
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        st.metric(label="Expected Annual Return", value=f"{expected_return:.2%}")
-        st.metric(label="Portfolio Standard Deviation (Risk)", value=f"{portfolio_std_dev:.2%}")
-    with col2:
-        st.metric(label="Sharpe Ratio", value=f"{sharpe_ratio:.2f}")
-
+    
 with tab2:
     st.subheader('Detailed Metrics Summary')
     col1, col2 = st.columns([1, 1.5])
