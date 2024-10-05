@@ -42,67 +42,73 @@ else:
     reduced_data = filtered_data.values
 
 # Apply KMeans Clustering
-kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-clusters = kmeans.fit_predict(reduced_data)
-
-# Add clusters to dataframe
-data['Cluster'] = clusters
-
-# Plotting the Clusters
-fig = plt.figure()
-if dimension == 2:
-    ax = fig.add_subplot(111)
-    for cluster in range(n_clusters):
-        cluster_data = reduced_data[clusters == cluster]
-        ax.scatter(cluster_data[:, 0], cluster_data[:, 1], label=f'Cluster {cluster}')
-    ax.set_xlabel('PCA Component 1' if apply_pca else 'Feature 1')
-    ax.set_ylabel('PCA Component 2' if apply_pca else 'Feature 2')
+if len(filtered_data) < n_clusters:
+    st.error("Number of clusters cannot be greater than the number of data points. Please adjust the number of clusters.")
 else:
-    ax = fig.add_subplot(111, projection='3d')
-    for cluster in range(n_clusters):
-        cluster_data = reduced_data[clusters == cluster]
-        ax.scatter(cluster_data[:, 0], cluster_data[:, 1], cluster_data[:, 2], label=f'Cluster {cluster}')
-    ax.set_xlabel('PCA Component 1' if apply_pca else 'Feature 1')
-    ax.set_ylabel('PCA Component 2' if apply_pca else 'Feature 2')
-    ax.set_zlabel('PCA Component 3' if apply_pca else 'Feature 3')
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    clusters = kmeans.fit_predict(reduced_data)
 
-ax.legend()
-st.pyplot(fig)
+    # Add clusters to dataframe
+    data['Cluster'] = clusters
 
-# Cluster Summary
-st.header('Cluster Summary')
-st.write("""
-Below, you can see a summary of each cluster, including statistics such as the mean, standard deviation, and range of values for each feature. This can help you understand the characteristics of each cluster, such as which assets are more volatile or have higher returns.
-""")
-for cluster in range(n_clusters):
-    st.subheader(f'Cluster {cluster}')
-    cluster_info = data[data['Cluster'] == cluster]
-    st.write(cluster_info.describe())
+    # Plotting the Clusters
+    fig = plt.figure()
+    if dimension == 2:
+        ax = fig.add_subplot(111)
+        for cluster in range(n_clusters):
+            cluster_data = reduced_data[clusters == cluster]
+            ax.scatter(cluster_data[:, 0], cluster_data[:, 1], label=f'Cluster {cluster}')
+        ax.set_xlabel('PCA Component 1' if apply_pca else 'Feature 1')
+        ax.set_ylabel('PCA Component 2' if apply_pca else 'Feature 2')
+    else:
+        ax = fig.add_subplot(111, projection='3d')
+        for cluster in range(n_clusters):
+            cluster_data = reduced_data[clusters == cluster]
+            ax.scatter(cluster_data[:, 0], cluster_data[:, 1], cluster_data[:, 2], label=f'Cluster {cluster}')
+        ax.set_xlabel('PCA Component 1' if apply_pca else 'Feature 1')
+        ax.set_ylabel('PCA Component 2' if apply_pca else 'Feature 2')
+        ax.set_zlabel('PCA Component 3' if apply_pca else 'Feature 3')
 
-# Feature Importance Visualization using Mean Decrease in Variance
-st.header('Feature Importance Visualization')
-st.write("""
-Feature importance is calculated here by looking at the variance of each feature. Features with higher variance tend to have a larger impact on clustering since they introduce more differentiation between data points.
-""")
-if not filtered_data.empty:
-    feature_importances = np.var(filtered_data, axis=0)
-    importance_df = pd.DataFrame({'Feature': features, 'Importance': feature_importances})
-    importance_df = importance_df.sort_values(by='Importance', ascending=False)
-
-    # Plotting Feature Importances
-    fig, ax = plt.subplots()
-    ax.barh(importance_df['Feature'], importance_df['Importance'])
-    ax.set_xlabel('Importance (Variance)')
-    ax.set_title('Feature Importance in Clustering')
+    ax.legend()
     st.pyplot(fig)
 
-# Add Insights Section
-st.header('Insights')
-st.write("""
-### Insights from Clustering
-- **Cluster Characteristics**: The clustering results can help identify groups of stocks that move similarly. This could be useful for building diversified portfolios or understanding sector-based movements.
-- **Impact of Dimensionality Reduction**: Applying PCA helps reduce the complexity of the dataset while retaining the essential information, making visualization easier and clustering more efficient. You can toggle PCA to see how it affects the clusters.
-- **3D Visualization**: The ability to visualize in three dimensions provides a richer understanding of how the clusters are formed, especially when there are more features involved.
+    # Cluster Summary
+    st.header('Cluster Summary')
+    st.write("""
+    Below, you can see a summary of each cluster, including statistics such as the mean, standard deviation, and range of values for each feature. This can help you understand the characteristics of each cluster, such as which assets are more volatile or have higher returns.
+    """)
 
-Adjust the parameters on the left to experiment with different clustering scenarios, and observe how the clusters change.
-""")
+    cols = st.columns(n_clusters)
+    for cluster, col in zip(range(n_clusters), cols):
+        with col:
+            st.subheader(f'Cluster {cluster}')
+            cluster_info = data[data['Cluster'] == cluster]
+            st.write(cluster_info.describe())
+
+    # Feature Importance Visualization using Mean Decrease in Variance
+    st.header('Feature Importance Visualization')
+    st.write("""
+    Feature importance is calculated here by looking at the variance of each feature. Features with higher variance tend to have a larger impact on clustering since they introduce more differentiation between data points.
+    """)
+    if not filtered_data.empty:
+        feature_importances = np.var(filtered_data, axis=0)
+        importance_df = pd.DataFrame({'Feature': features, 'Importance': feature_importances})
+        importance_df = importance_df.sort_values(by='Importance', ascending=False)
+
+        # Plotting Feature Importances
+        fig, ax = plt.subplots()
+        ax.barh(importance_df['Feature'], importance_df['Importance'])
+        ax.set_xlabel('Importance (Variance)')
+        ax.set_title('Feature Importance in Clustering')
+        st.pyplot(fig)
+
+    # Add Insights Section
+    st.header('Insights')
+    st.write("""
+    ### Insights from Clustering
+    - **Cluster Characteristics**: The clustering results can help identify groups of stocks that move similarly. This could be useful for building diversified portfolios or understanding sector-based movements.
+    - **Impact of Dimensionality Reduction**: Applying PCA helps reduce the complexity of the dataset while retaining the essential information, making visualization easier and clustering more efficient. You can toggle PCA to see how it affects the clusters.
+    - **3D Visualization**: The ability to visualize in three dimensions provides a richer understanding of how the clusters are formed, especially when there are more features involved.
+
+    Adjust the parameters on the left to experiment with different clustering scenarios, and observe how the clusters change.
+    """)
