@@ -29,7 +29,7 @@ st.sidebar.header('Clustering Parameters')
 n_clusters = st.sidebar.slider('Number of Clusters', min_value=2, max_value=10, value=4)
 features = st.sidebar.multiselect('Features to Include', options=data.columns.tolist(), default=data.columns.tolist() if not data.empty else [])
 apply_pca = st.sidebar.checkbox('Apply PCA for Dimensionality Reduction', value=True)
-dimension = st.sidebar.selectbox('Select Number of Dimensions for Plotting', options=[2, 3], index=0)
+dimension = st.sidebar.slider('Select Number of Dimensions for Plotting', min_value=2, max_value=3, value=2)
 
 # Filter dataset to selected features
 filtered_data = data[features]
