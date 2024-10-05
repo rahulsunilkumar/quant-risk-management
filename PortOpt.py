@@ -72,13 +72,31 @@ with tab1:
 
 with tab2:
     st.subheader('Predicted Returns')
-    st.write("### Historical Adjusted Close Prices", data.tail())
-    st.write("### Daily Returns", returns.tail())
-    st.write("### Predicted Returns", predictions.tail())
-    st.write("### Dynamic Summary of Predicted Returns")
-    mean_pred_returns = predictions.mean()
-    fig = go.Figure()
-    fig.add_trace(go.Bar(x=mean_pred_returns.index, y=mean_pred_returns.values, name='Mean Predicted Return'))
-    fig.update_layout(title_text='Mean Predicted Returns for Selected Assets', xaxis_title='Ticker', yaxis_title='Mean Predicted Return')
-    st.plotly_chart(fig)
+    
+    col1, col2 = st.columns([1, 1.5])
+    
+    with col1:
+        st.write("### Historical Adjusted Close Prices")
+        st.dataframe(data.tail(), height=300)
+
+        st.write("### Daily Returns")
+        st.dataframe(returns.tail(), height=300)
+
+        st.write("### Predicted Returns")
+        st.dataframe(predictions.tail(), height=300)
+
+    with col2:
+        st.write("### Dynamic Summary of Predicted Returns")
+        mean_pred_returns = predictions.mean()
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=mean_pred_returns.index, y=mean_pred_returns.values, name='Mean Predicted Return'))
+        fig.update_layout(
+            title_text='Mean Predicted Returns for Selected Assets',
+            xaxis_title='Ticker',
+            yaxis_title='Mean Predicted Return',
+            height=600,
+            width=700
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
 
