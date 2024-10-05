@@ -14,7 +14,8 @@ st.set_page_config(page_title="Asset Clustering App", layout="wide")
 
 # Load Stock Dataset from Yahoo Financ
 all_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX', 'BABA', 'TSM', 'JPM', 'V', 'SPY', 'BND', 'GLD', 'QQQ', 'VTI']
-data = yf.download(symbols, start='2023-01-01', end='2023-12-31')['Adj Close']
+symbols = st.sidebar.multiselect('Features to Include', options=all_symbols, default=['SPY', 'BND', 'GLD', 'QQQ', 'VTI'])
+data = yf.download(all_symbols, start='2023-01-01', end='2023-12-31')['Adj Close']
 data = data.pct_change().dropna()
 
 # Injecting Custom CSS to improve look
@@ -44,7 +45,6 @@ st.sidebar.header('Clustering Parameters')
 
 # Sidebar Inputs with improved labels and custom colors
 n_clusters = st.sidebar.slider('Number of Clusters (Adjust to find optimal grouping)', min_value=2, max_value=10, value=4)
-symbols = st.sidebar.multiselect('Features to Include', options=all_symbols, default=['SPY', 'BND', 'GLD', 'QQQ', 'VTI'])
 apply_pca = st.sidebar.checkbox('Apply PCA for Dimensionality Reduction (Reduce complexity while retaining key information)', value=True)
 dimension = st.sidebar.slider('Select Number of Dimensions for Plotting', min_value=2, max_value=3, value=2)
 
