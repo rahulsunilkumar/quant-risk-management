@@ -58,18 +58,19 @@ for cluster in range(n_clusters):
     cluster_info = data[data['Cluster'] == cluster]
     st.write(cluster_info.describe())
 
-# Feature Importance Visualization using SHAP
+# Feature Importance Visualization using Mean Decrease in Variance
 st.header('Feature Importance Visualization')
-# Limiting the number of samples for SHAP to avoid long runtime
-sample_data = filtered_data.sample(min(100, len(filtered_data))) if not filtered_data.empty else filtered_data
-if not sample_data.empty:
-    explainer = shap.KernelExplainer(kmeans.predict, sample_data)
-if not sample_data.empty:
-    shap_values = explainer.shap_values(sample_data)
+if not filtered_data.empty:
+    feature_importances = np.var(filtered_data, axis=0)
+    importance_df = pd.DataFrame({'Feature': features, 'Importance': feature_importances})
+    importance_df = importance_df.sort_values(by='Importance', ascending=False)
 
-shap.summary_plot(shap_values, filtered_data, feature_names=features, show=False)
-plt.title('Feature Importance in Clustering')
-st.pyplot(plt.gcf())
+    # Plotting Feature Importances
+    fig, ax = plt.subplots()
+    ax.barh(importance_df['Feature'], importance_df['Importance'])
+    ax.set_xlabel('Importance (Variance)')
+    ax.set_title('Feature Importance in Clustering')
+    st.pyplot(fig)
 
 # Add Insights Section
 st.header('Insights')
