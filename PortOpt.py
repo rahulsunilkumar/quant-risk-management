@@ -78,13 +78,6 @@ benchmark_returns = np.log(benchmark_data / benchmark_data.shift(1)).dropna()
 tab1, tab2 = st.tabs(["Optimal Portfolio", "Details"])
 
 with tab1:
-    st.subheader('Optimal Portfolio Allocation')
-    fig = go.Figure(data=[go.Pie(labels=weights_df['Ticker'], values=weights_df['Optimal Weight'], hole=.3)])
-    if len(weights_df[weights_df['Optimal Weight'] > 0]) == 1:
-        fig.update_traces(showlegend=False)
-    fig.update_layout(title_text="Optimal Portfolio Allocation", annotations=[dict(text='100%', x=0.5, y=0.5, font_size=20, showarrow=False)], template='plotly_dark')
-    st.plotly_chart(fig, use_container_width=True)
-
     st.subheader('Benchmark Comparison')
     cumulative_portfolio_returns = (portfolio_returns + 1).cumprod()
     cumulative_portfolio_returns.index = cumulative_portfolio_returns.index.tz_localize(None)
