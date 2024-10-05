@@ -74,11 +74,13 @@ else:
 
         # Enhanced visualization with Plotly
         if dimension == 2:
+            fig = plt.figure(figsize=(12, 8))
             fig = px.scatter(x=reduced_data[:, 0], y=reduced_data[:, 1], color=clusters.astype(str),
                              labels={'x': 'PCA Component 1' if apply_pca else 'Feature 1',
                                      'y': 'PCA Component 2' if apply_pca else 'Feature 2'},
                              title='2D Cluster Visualization')
         else:
+            fig = plt.figure(figsize=(12, 8))
             fig = px.scatter_3d(x=reduced_data[:, 0], y=reduced_data[:, 1], z=reduced_data[:, 2],
                                 color=clusters.astype(str),
                                 labels={'x': 'PCA Component 1' if apply_pca else 'Feature 1',
