@@ -20,7 +20,7 @@ st.sidebar.header('Clustering Parameters')
 
 # Sidebar Inputs
 n_clusters = st.sidebar.slider('Number of Clusters', min_value=2, max_value=10, value=4)
-features = st.sidebar.multiselect('Features to Include', options=data.columns, default=list(data.columns))
+features = st.sidebar.multiselect('Features to Include', options=data.columns.tolist(), default=data.columns.tolist())
 apply_pca = st.sidebar.checkbox('Apply PCA for Dimensionality Reduction', value=True)
 
 # Filter dataset to selected features
@@ -60,8 +60,10 @@ for cluster in range(n_clusters):
 
 # Feature Importance Visualization using SHAP
 st.header('Feature Importance Visualization')
-explainer = shap.KernelExplainer(kmeans.predict, filtered_data)
-shap_values = explainer.shap_values(filtered_data)
+# Limiting the number of samples for SHAP to avoid long runtime
+sample_data = filtered_data.sample(100) if len(filtered_data) > 100 else filtered_data
+explainer = shap.KernelExplainer(kmeans.predict, sample_data)
+shap_values = explainer.shap_values(sample_data)
 
 shap.summary_plot(shap_values, filtered_data, feature_names=features, show=False)
 plt.title('Feature Importance in Clustering')
