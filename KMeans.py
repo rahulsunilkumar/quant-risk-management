@@ -37,7 +37,7 @@ st.title('Asset Clustering Using Machine Learning')
 st.write("""
 This application demonstrates how machine learning can be used to cluster financial assets based on their price movements. By selecting different clustering parameters and features, you can explore how similar or different assets behave, providing insights into diversification opportunities and market behavior.
 
-Clustering is a powerful tool for understanding patterns in financial data, and in this app, we leverage k-means clustering combined with optional dimensionality reduction (PCA) to group similar stocks.
+Clustering is a powerful tool for understanding patterns in financial data, and in this app, we leverage k-means clustering combined with optional dimensionality reduction (PCA) to group similar stocks. Make sure to expand the figures to get a good view and toggle the third dimension.
 """)
 
 st.sidebar.header('Clustering Parameters')
